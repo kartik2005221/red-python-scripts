@@ -1,3 +1,6 @@
+#This script opens your webcam, shows a live video feed, and closes when you press the Esc key.
+# It’s a basic example of real-time video capture using OpenCV.
+
 import cv2
 
 # id of the video capturing device to open. To open default camera using default backend just pass 0.
@@ -14,3 +17,4 @@ while True:
 # Release the capture and destroy all OpenCV Windows.
 capture.release()
 cv2.destroyAllWindows()
+
